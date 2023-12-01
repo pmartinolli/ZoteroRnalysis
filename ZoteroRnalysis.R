@@ -2,16 +2,18 @@
 #ZoteroRanalysis
 #---
 
-# This file is supposed to contain all the information needed to understand, process, and produce data
+# author : Pascal Martinolli
+# date (v1): 2023-12-01
+# URL : https://github.com/pmartinolli/ZoteroRnalysis/ 
 
 
-
-# What is it doing ? 
+# WHAT IS IT DOING ? 
 # This R code can analyze a Zotero library of references & can produce graphics and tabular statistics
 
 
 
-# Why ?
+# WHY ?
+# To learn R Studio with a fun, useful and easy practice 
 # To better understand your library of references
 # For example :
 # What is the distribution of the year of publication ? Did the publications happened long after the journal were created of is it a new academic outlet ?
@@ -26,7 +28,11 @@
 
 
 
-# What do you need ?
+
+
+# WHAT DO YOU NEED ?
+# This file is supposed to contain all the information needed to understand, process, and produce data
+
 # 1. Zotero installed
 # With a library of references
 #    The more cleaned are the references, the better is the analysis
