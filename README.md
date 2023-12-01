@@ -4,4 +4,15 @@ Analyze your Zotero library of references with R, to produce graphics and csv fi
 - Everything you need to know is self-contained in the `ZoteroRnalysis.R` file.
 - The file `My library.csv` is an example of Zotero references to be processed.
 - The file `journal_titles_reconciled.csv` is an example of reconciled data with OpenRefine.
+- The R program will produce a `output` subfolder with `.pdf` and `.csv` files
 
+Examples of analysis : 
+- Distribution of the journal articles, by year of publication
+- Journal names, counted and ranked
+- Book publisher names, counted and ranked 
+- Author names, counted and ranked
+- Languages used, counted and ranked
+- Number of authors per papers, distributed by year
+- Personal tags used, counted, ranked and distributed by year (two levels of tags)
+- How many years articles are published after the year of inception of each journals (with reconciled data from Wikidata with OpenRefine)
+- Distribution of the countries of origins of the journals  (with reconciled data from Wikidata with OpenRefine)
