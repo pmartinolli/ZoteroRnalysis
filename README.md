@@ -7,7 +7,7 @@ Analyze your Zotero library of references with R, to produce graphics and csv fi
 - The R program will produce a `output` subfolder with `.pdf` and `.csv` files
 
 Examples of analysis : 
-- Distribution of the journal articles, by year of publication
+- Distribution of the journal articles, by years of publication
 - Journal names, counted and ranked
 - Book publisher names, counted and ranked 
 - Author names, counted and ranked
