@@ -14,5 +14,5 @@ Examples of analysis :
 - Languages used, counted and ranked
 - Number of authors per papers, distributed by year
 - Personal tags used, counted, ranked and distributed by year (two levels of tags)
-- How many years articles are published after the year of inception of each journals (with reconciled data from Wikidata with OpenRefine)
+- For each article, what is the time span between the inception year of the journal and the publication year of the articles? (with reconciled data from Wikidata with OpenRefine)
 - Distribution of the countries of origins of the journals  (with reconciled data from Wikidata with OpenRefine)
