@@ -1,9 +1,9 @@
 #---
-#ZoteroRanalysis
+#ZoteroRnalysis, version 1.7
 #---
 
 # author : Pascal Martinolli
-# date (v1): 2023-12-01
+# date (version 1.0) : 2023-12-01
 # URL : https://github.com/pmartinolli/ZoteroRnalysis/ 
 
 
@@ -492,6 +492,19 @@ write.csv(top_tags, file = file_path, row.names = FALSE)
 # Aussi dans le Manuel pratique de recherche documentaire (PLU6058), chapitre 15.2 : https://bib.umontreal.ca/multidisciplinaire/plu6058 (in French)
 # An example of two level thesaurus : https://github.com/pmartinolli/TM-MyThesaurus/blob/master/files/TTRPG-simple-thesaurus.pdf
 
+# TL;DR, your thesaurus should be organized like this :
+#
+# _PSYCHOLOGY 
+#    _therapy
+#    _mental disorder
+#    _cognition
+#    _well-being
+#
+# Every time you add a specific tag (non capital letter), you should add also the related generic TAG (capital letter)
+
+
+
+
 # Filter only the tags written in capital letters
 capital_top_tags <- top_tags[grep("^_[A-Z]+$", top_tags$Tag), ]
 
@@ -650,6 +663,74 @@ ggsave(file_path, plot = gg_plot, width = 8, height = 6)
 # Use write.csv to export the top tags to a CSV file
 file_path <- file.path(output_folder, "tags_distributed_by_year.csv")
 write.csv(DDFF, file = file_path, row.names = FALSE)
+
+
+
+
+
+
+
+
+
+
+# ANALYSIS : the distribution of 3 tags only
+
+# Assuming your data frame is named DF with a column Tags
+DF <- subset1_ZOTEROLIB
+
+# Create an empty dataframe DDFF
+DDFF <- data.frame()
+
+# Create a small set of 3 tags
+small_set_tags <- tags_counts_df %>%
+  filter(Tag %in% c("_therapy", "_mental disorder", "_well-being"))
+
+# Iterate over unique Publication.Year values
+for (year in unique(DF$Publication.Year)) {
+  # Extract tags for the current year
+  year_tags <- unlist(strsplit(gsub(" ", "", DF$Manual.Tags[DF$Publication.Year == year]), ";"))
+  
+  # Initialize a data frame for the current year
+  year_df <- data.frame(
+    Publication.Year = rep(year, length(small_set_tags$Tag)),
+    Tags = small_set_tags$Tag,
+    Count = 0
+  )
+  
+  # Iterate over tags and update Count using regex
+  for (i in seq_along(year_df$Tags)) {
+    tag <- year_df$Tags[i]
+    regex_pattern <- paste0("\\b", tag, "\\b")  # Use word boundaries to match whole tags
+    year_df$Count[i] <- sum(grepl(regex_pattern, DF$Manual.Tags[DF$Publication.Year == year]))
+  }
+  
+  # Bind the dataframe to DDFF
+  DDFF <- rbind(DDFF, year_df)
+}
+
+# Reset row names
+rownames(DDFF) <- NULL
+
+# Plot the bar chart
+gg_plot <- ggplot(DDFF, aes(x = Publication.Year, y = Count, fill = Tags)) +
+  geom_bar(stat = "identity", position = "stack") +
+  labs(title = "Distribution of 3 selected tags throught the years", 
+       x = "Publication Year", 
+       y = "Count") +
+  theme_minimal()
+
+print(gg_plot)
+
+# Save the ggplot to a PDF file
+file_path <- file.path(output_folder, "small_set_tags_distributed_by_year.pdf")
+ggsave(file_path, plot = gg_plot, width = 8, height = 6)
+
+# Use write.csv to export the top tags to a CSV file
+file_path <- file.path(output_folder, "samll_set_tags_distributed_by_year.csv")
+write.csv(DDFF, file = file_path, row.names = FALSE)
+
+
+
 
 
 
@@ -943,6 +1024,187 @@ wordcloud2(data=df, size=1.6, color='random-dark')
 
 
 
+
+
+library(tidyr)
+library(dplyr)
+## Analysis : Thesis
+
+subset2_ZOTEROLIB <- subset(ZOTEROLIB, 
+                            (Item.Type == "thesis" & 
+                              grepl("_TTRPG", Manual.Tags)))
+
+DF <- subset2_ZOTEROLIB
+
+# Remove all Type of thesis = Bachelor stuff (starts by B or R of D or H or I or C or S)
+DF <- DF %>%
+  filter(!grepl("^[BRDHCS]", Type))
+
+# Normalized Type field into TypeNormalized
+# if Type starts by T P or D, then its a PhD
+# if Type starts by M, then its a Master
+DF <- DF %>%
+  mutate(TypeNormalized = case_when(
+    grepl("^[TPD]", Type) ~ "PhD",
+    grepl("^M", Type) ~ "Master",
+    TRUE ~ Type
+  ))
+
+# Now select only the PhD and the Master
+DF <- DF %>%
+  filter(TypeNormalized %in% c("PhD", "Master"))
+
+# Create a bar plot
+# Assuming DF is your data frame with columns 'Year' and 'Count'
+gg_plot <- ggplot(DF, aes(x = Publication.Year, fill = TypeNormalized)) +
+  geom_bar(position = position_stack(reverse = TRUE), stat = "count") +
+  labs(title = "Master and Doctoral Thesis Distributed by Year", x = "Year", y = "Count") +
+  theme_minimal()
+
+# After runing the line under, a graphic is supposed to be displayed in the frame at the right of this one
+print(gg_plot)
+
+# Save the ggplot to a PDF file
+file_path <- file.path(output_folder, "thesis_by_year.pdf")
+ggsave(file_path, plot = gg_plot, width = 8, height = 6)
+
+# Export the data as a CSV file with column names
+# Create separate columns for Count PhD and Count Master
+DF_counts <- DF %>%
+  group_by(Publication.Year, TypeNormalized) %>%
+  summarise(Count = n())
+
+# Pivot the data to wide format
+DF_counts_wide <- pivot_wider(DF_counts, names_from = TypeNormalized, values_from = Count)  #library(tidyr)
+
+file_path <- file.path(output_folder, "thesis_by_year.csv")
+write.csv(DF_counts_wide, file = file_path, row.names = FALSE)
+
+
+
+
+
+
+# Load ggplot2 library if not already loaded
+if (!requireNamespace("ggplot2", quietly = TRUE)) {
+  install.packages("ggplot2")
+}
+
+library(tidyverse)
+
+# Filter rows where TypeNormalized is "PhD" and Num.Pages is not NA
+filtered_df_phd <- DF %>% filter(TypeNormalized == "PhD" & !is.na(Num.Pages))
+# Filter rows where TypeNormalized is "Master" and Num.Pages is not NA
+filtered_df_master <- DF %>% filter(TypeNormalized == "Master" & !is.na(Num.Pages))
+
+# Calculate the average of Num.Pages for PhD
+average_num_pages_phd <- mean(filtered_df_phd$Num.Pages, na.rm = TRUE)
+# Calculate the average of Num.Pages for Master
+average_num_pages_master <- mean(filtered_df_master$Num.Pages, na.rm = TRUE)
+
+# Create a scatter plot with averages displayed
+gg_plot <- ggplot() +
+  geom_point(data = filtered_df_phd, aes(x = jitter(rep(2, nrow(filtered_df_phd)), amount = 0.1), y = Num.Pages), color = "red") +
+  geom_text(data = filtered_df_master, aes(x = 1, y = average_num_pages_master,
+                                           label = sprintf("Avg (Master): %.2f", average_num_pages_master)),
+            vjust = -0.5, hjust = -0.5, color = "darkgreen", size = 6) +
+  geom_point(data = filtered_df_master, aes(x = jitter(rep(1, nrow(filtered_df_master)), amount = 0.1), y = Num.Pages), color = "green") +
+  geom_text(data = filtered_df_phd, aes(x = 2, y = average_num_pages_phd,
+                                        label = sprintf("Avg (PhD): %.2f", average_num_pages_phd)),
+            vjust = -0.5, hjust = 1.3, color = "darkred", size = 6) +
+  labs(title = "Average Number of Pages for PhD and Master Thesis (excluding NA)",
+       x = " ",
+       y = "Number of Pages")
+
+print(gg_plot)
+
+# Save the ggplot to a PDF file
+file_path <- file.path(output_folder, "avg_nb_pages_per_thesis.pdf")
+ggsave(file_path, plot = gg_plot, width = 8, height = 6)
+
+
+
+
+
+
+# Exporting the list of universities for another round of reconciliation with Wikidata data to retrieve Countries
+
+# Replace 'DF$Publisher' with the column you want to export
+column_to_export <- DF$Publisher
+
+# Convert the column to a data frame with a custom name
+df_to_export <- data.frame(Universities = column_to_export)
+
+# Specify the file name
+file_name <- paste0(output_folder, "/", "universities2reconcile.csv")
+
+# Export the data frame to a CSV file
+write.csv(df_to_export, file = file_name, row.names = FALSE)
+
+
+# Open this csv with OpenRefine
+# Duplicate the first column into a new column named UniversitiesWD
+# Reconcile the UniversitiesWD column (to keep the first column identical and allow joining the data later)
+# Add a new column based on the reconciled data : UniversitiesWD.QID
+# Add a new column based on the reconciled data : Country
+# Add a new column based on the reconciled data : Country.QID
+
+# Export the file as comma-separated value "universities-reconciled.csv" 
+# "Universities", "UniversitiesWD", "UCountry", "UniversitiesWD.QID", "UCountry.QID"
+# and put it at the root of the working folder
+
+############## A REFAIRE pour conserver la 1ere  colonne ########################
+
+
+# load the data
+
+# Read the CSV file into a variable (e.g., data_frame) with specific options
+file_path <- "universities-reconciled.csv"
+universities_reconciled <- read.csv(file_path, header = FALSE, col.names = c("Universities", "UniversitiesWD", "UCountry", "UniversitiesWD.QID", "UCountry.QID"))
+
+# merge the data 
+DF <- merge(DF, universities_reconciled, by.x = 'Publisher', by.y = 'Universities', all = FALSE)
+
+count_data <- DF %>% 
+  group_by(UCountry, TypeNormalized) %>%
+  summarize(count = n())
+
+# Create the bar plot with reordered x-axis and categorized bars
+gg_plot <- ggplot(count_data, aes(x = reorder(UCountry, -count), y = count, fill = TypeNormalized)) +
+  geom_bar(stat = "identity", position = position_stack(reverse = TRUE)) +
+  labs(title = "Country Distribution", x = "Country", y = "Count") +
+  coord_flip()  # Use coord_flip() to flip the x and y axes
+
+print(gg_plot)
+
+# Save the ggplot to a PDF file
+file_path <- file.path(output_folder, "thesis_by_countries.pdf")
+ggsave(file_path, plot = gg_plot, width = 8, height = 6)
+
+
+file_path <- file.path(output_folder, "thesis_by_countries.csv")
+write.csv(count_data, file = file_path, row.names = FALSE)
+
+
+
+
+
+
+
+
+
+
+
+
+## Final Export of the enriched ZOTEROLIB data frame into a csv
+
+# Export the data as a CSV file with column names
+file_path <- file.path(output_folder, "My_library_enriched.csv")
+write.csv(ZOTEROLIB, file = file_path, row.names = FALSE)
+
+
+
+
 #####################
 
 # Credits
@@ -951,6 +1213,11 @@ wordcloud2(data=df, size=1.6, color='random-dark')
 # Caroline Patenaude, Data librarian at Université de Montréal for teaching me R & OpenRefine 
 # Céline Van den Rul at https://towardsdatascience.com/create-a-word-cloud-with-r-bde3e7422e8a for word clouds
 # David Tingle at https://davidtingle.com/misc/bib for ideas of analysis to perform
+
+# Bloggued and discussed (with sample graphics visualizations) at https://jdr.hypotheses.org/1907
+
+# GPL-3.0 license https://github.com/pmartinolli/ZoteroRnalysis/blob/main/LICENSE 
+# Last version of the code available at https://github.com/pmartinolli/ZoteroRnalysis/
 
 
 
