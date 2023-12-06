@@ -1,5 +1,5 @@
 #---
-#ZoteroRnalysis, version 1.7
+#ZoteroRnalysis, version 1.8
 #---
 
 # author : Pascal Martinolli
@@ -14,17 +14,16 @@
 
 # WHY ?
 # To learn R Studio with a fun, useful and easy practice 
-# To better understand your library of references
-# For example :
-# What is the distribution of the year of publication ? Did the publications happened long after the journal were created of is it a new academic outlet ?
-# What are the main journals of the articles ? It can give an idea where to publish later
-# What are the main publishers of the books and book sections ?
-# What are the main languages of the references ?
-# What are the main authors of the studies ? 
-# Are authors single authors or multiples authors ?
-# What are the main topics of the studies ? (NB: you will need to have indexed your corpus of references with your own thesaurus)
-# How are the topics are distributed through the years ?
-# What look like a word cloud of the titles of the studies ? 
+# To better understand your library of references, for example :
+#     What is the distribution of the year of publication ? Did the publications happened long after the journal were created of is it a new academic outlet ?
+#     What are the main journals of the articles ? It can give an idea where to publish later
+#     What are the main publishers of the books and book sections ?
+#     What are the main languages of the references ?
+#     What are the main authors of the studies ? 
+#     Are authors single authors or multiples authors ?
+#     What are the main topics of the studies ? (NB: you will need to have indexed your corpus of references with your own thesaurus)
+#     How are the topics are distributed through the years ?
+#   What look like a word cloud of the titles of the studies ? 
 
 
 
@@ -262,7 +261,7 @@ all_titles_df <- data.frame(Publication.Title = names(all_titles), Count = as.nu
 # Assuming top_titles_df is your data frame with columns 'Publication.Title' and 'Count'
 gg_plot <- ggplot(top_titles_df, aes(x = reorder(`Publication.Title`, Count), y = Count)) +
   geom_col(fill = "skyblue") +
-  labs(title = "Top 15 Journal titles most frequently utilized for peer-reviewed articles", x = "Journal Titles", y = "Count") +
+  labs(title = "Top 15 Academic Journals", x = "Journal Titles", y = "Count") +
   theme_minimal() +
   coord_flip()
 
@@ -1153,7 +1152,12 @@ write.csv(df_to_export, file = file_name, row.names = FALSE)
 # "Universities", "UniversitiesWD", "UCountry", "UniversitiesWD.QID", "UCountry.QID"
 # and put it at the root of the working folder
 
-############## A REFAIRE pour conserver la 1ere  colonne ########################
+
+
+
+
+
+
 
 
 # load the data
@@ -1164,13 +1168,14 @@ universities_reconciled <- read.csv(file_path, header = FALSE, col.names = c("Un
 
 # merge the data 
 DF <- merge(DF, universities_reconciled, by.x = 'Publisher', by.y = 'Universities', all = FALSE)
+DF <- distinct(DF, Key, .keep_all = TRUE)
 
 count_data <- DF %>% 
   group_by(UCountry, TypeNormalized) %>%
   summarize(count = n())
 
 # Create the bar plot with reordered x-axis and categorized bars
-gg_plot <- ggplot(count_data, aes(x = reorder(UCountry, -count), y = count, fill = TypeNormalized)) +
+gg_plot <- ggplot(count_data, aes(x = reorder(UCountry, count), y = count, fill = TypeNormalized)) +
   geom_bar(stat = "identity", position = position_stack(reverse = TRUE)) +
   labs(title = "Country Distribution", x = "Country", y = "Count") +
   coord_flip()  # Use coord_flip() to flip the x and y axes
@@ -1198,6 +1203,17 @@ write.csv(count_data, file = file_path, row.names = FALSE)
 
 ## Final Export of the enriched ZOTEROLIB data frame into a csv
 
+file_name <- "My library.csv"
+ZOTEROLIB <- read.table(file_name, header = TRUE, sep = ",", encoding = "UTF-8")
+
+# Full join with journal_titles_reconciled
+ZOTEROLIB <- full_join(ZOTEROLIB, journal_titles_reconciled, by = c('Publication.Title' = 'Publication.Title'), relationship = "many-to-many")
+# Full join with universities_reconciled
+ZOTEROLIB <- full_join(ZOTEROLIB, universities_reconciled, by = c('Publisher' = 'Universities'), relationship = "many-to-many")
+
+# Remove duplicates based on the Key field
+ZOTEROLIB <- distinct(ZOTEROLIB, Key, .keep_all = TRUE)
+
 # Export the data as a CSV file with column names
 file_path <- file.path(output_folder, "My_library_enriched.csv")
 write.csv(ZOTEROLIB, file = file_path, row.names = FALSE)
@@ -1213,8 +1229,13 @@ write.csv(ZOTEROLIB, file = file_path, row.names = FALSE)
 # Caroline Patenaude, Data librarian at Université de Montréal for teaching me R & OpenRefine 
 # Céline Van den Rul at https://towardsdatascience.com/create-a-word-cloud-with-r-bde3e7422e8a for word clouds
 # David Tingle at https://davidtingle.com/misc/bib for ideas of analysis to perform
+# Zotero development team
+# R and R Studio development team
+# OpenRefine development team
+# Wikidata development team and community of contributors
 
-# Bloggued and discussed (with sample graphics visualizations) at https://jdr.hypotheses.org/1907
+
+# This project and an example (about TTRPGs) is bloggued and discussed (with sample graphics visualizations) at https://jdr.hypotheses.org/1907
 
 # GPL-3.0 license https://github.com/pmartinolli/ZoteroRnalysis/blob/main/LICENSE 
 # Last version of the code available at https://github.com/pmartinolli/ZoteroRnalysis/
