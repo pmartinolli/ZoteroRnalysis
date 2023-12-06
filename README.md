@@ -14,8 +14,8 @@ Analyze your Zotero library of references with R, to produce graphics and csv fi
 - Languages used, counted and ranked
 - Number of authors per papers, distributed by year
 - Personal tags used, counted, ranked and distributed by year (two levels of tags)
-- For each article, what is the time span between the inception year of the journal and the publication year of the articles? (with reconciled data from Wikidata with OpenRefine)
-- Distribution of the countries of origins of the journals  (with reconciled data from Wikidata with OpenRefine)
+- For each article, what is the time span between the journal inception year and the article publication year ? (with reconciled data from Wikidata with OpenRefine)
+- Distribution of the countries of origin of the journals  (with reconciled data from Wikidata with OpenRefine)
 
 View sample graphics visualizations here : https://jdr.hypotheses.org/1907
 
