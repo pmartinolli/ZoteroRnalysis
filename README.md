@@ -19,6 +19,7 @@ Analyze your Zotero library of references with R, to produce graphics and csv fi
 
 View sample graphics visualizations here : https://jdr.hypotheses.org/1907
 
+![Examples](https://github.com/pmartinolli/ZoteroRnalysis/blob/main/GitHub-illustration.png)
 
 ## Credits & Acknowledgments
 
