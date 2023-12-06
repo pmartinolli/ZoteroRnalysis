@@ -6,7 +6,7 @@ Analyze your Zotero library of references with R, to produce graphics and csv fi
 - The file `journal_titles_reconciled.csv` is an example of reconciled data with OpenRefine.
 - The R program will produce a `output` subfolder with `.pdf` and `.csv` files
 
-Examples of analysis : 
+## Examples of analysis : 
 - Distribution of the journal articles, by years of publication
 - Journal names, counted and ranked
 - Book publisher names, counted and ranked 
@@ -20,9 +20,20 @@ Examples of analysis :
 View sample graphics visualizations here : https://jdr.hypotheses.org/1907
 
 
+## Credits & Acknowledgments
 
-Author : Pascal Martinolli
+- Author : Pascal Martinolli
+- Date (v1) : 2023-12-01
+- Thanks to :
+  - ChatGPT 3.5 by OpenAI for a lot of help with back and forth feedbacks on my R code
+  - Caroline Patenaude, Data librarian at Université de Montréal for teaching me R & OpenRefine
+  - Céline Van den Rul at https://towardsdatascience.com/create-a-word-cloud-with-r-bde3e7422e8a for word clouds
+  - David Tingle at https://davidtingle.com/misc/bib for ideas of analysis to perform
+  - Zotero development team
+  - R and R Studio development team
+  - OpenRefine development team
+  - Wikidata development team and community of contributors
 
-Date : 2023-12-01
+GPL-3.0 license https://github.com/pmartinolli/ZoteroRnalysis/blob/main/LICENSE 
 
-https://github.com/pmartinolli/ZoteroRnalysis/
+Last version of the code available at https://github.com/pmartinolli/ZoteroRnalysis/
