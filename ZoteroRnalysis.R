@@ -1,20 +1,39 @@
 #---
-#ZoteroRnalysis, version 1.8
+#ZoteroRnalysis, version 1.9
 #---
 
-# author : Pascal Martinolli
-# date (version 1.0) : 2023-12-01
-# URL : https://github.com/pmartinolli/ZoteroRnalysis/ 
+## TODOLIST : commenting the code and changing the name of the variables for better readability 
 
 
-# WHAT IS IT DOING ? 
+
+
+### METADATA
+
+# Author : Pascal Martinolli
+# Date (version 1.0) : 2023-12-01
+# Last version of the code available at https://github.com/pmartinolli/ZoteroRnalysis/
+# GPL-3.0 license https://github.com/pmartinolli/ZoteroRnalysis/blob/main/LICENSE 
+# This project and an example about TTRPGs is bloggued and discussed at https://jdr.hypotheses.org/1907 (in French)
+
+
+
+
+
+
+
+### WHAT IS IT DOING ? 
+
 # This R code can analyze a Zotero library of references & can produce graphics and tabular statistics
+# Optionally, it can retrieve information from Wikidata to enrich the original information
 
 
 
-# WHY ?
-# To learn R Studio with a fun, useful and easy practice 
-# To better understand your library of references, for example :
+
+
+### WHY ?
+
+# 1. To learn R Studio with a fun, useful and easy practice 
+# 2. To better understand your library of references, for example :
 #     What is the distribution of the year of publication ? Did the publications happened long after the journal were created of is it a new academic outlet ?
 #     What are the main journals of the articles ? It can give an idea where to publish later
 #     What are the main publishers of the books and book sections ?
@@ -23,35 +42,57 @@
 #     Are authors single authors or multiples authors ?
 #     What are the main topics of the studies ? (NB: you will need to have indexed your corpus of references with your own thesaurus)
 #     How are the topics are distributed through the years ?
-#   What look like a word cloud of the titles of the studies ? 
+#     What look like a word cloud of the titles of the studies ? 
+#     What is the distribution of Master and PhD thesis (by year, country, number of pages)
 
 
 
 
 
-# WHAT DO YOU NEED ?
+### WHAT DO YOU NEED ?
+
 # This file is supposed to contain all the information needed to understand, process, and produce data
 
 # 1. Zotero installed
-# With a library of references
-#    The more cleaned are the references, the better is the analysis
-#    The better indexed are the references, also the better is the analysis
+#    With a library of references
+#       - The more cleaned are the references, the better is the analysis
+#       - The better indexed are the references, also the better is the analysis
+
 # 2. R and R Studio installed
-# With all the packages 
-#    You will find them along the way with #install.packages("NAME")
-#    The first time you start this program you need to remove the # before and Run the line
-#    Because it takes time, once installed you can put back the # before to skip that step
-# 3. OpenRefine installed
+#    With all the packages (that should be retrieved and installed at the first run of this code)
+
+# 3. OpenRefine installed (optional)
 #    If you want to reconcile your data with open linked data online
 #    It means your will semi-automatically retrieve more data (if it is indexed in Wikidata) to enrich your own data
-#    For example, with the name of the Journal we will retrieve the Date of creation of the journal (Inception) or the Country of origin of the journal
+#    For example, with the name of the journal we will retrieve the date of creation of the journal (Inception) and the country of origin of the journal
 #    Yes, it's awesome!
-# 4. any PDF viewer, to open some graphics
-# 5. OpenOffice Calc, to open the csv tabular extractions 
+
+# 4. Any PDF viewer, to open some graphics in pdf
+
+# 5. OpenOffice Calc, to open (and maybe edit) the csv files 
 
 
 
 
+
+
+### CREDITS
+
+# ChatGPT 3.5 by OpenAI for a lot of help with back and forth feedback on my R code
+# Caroline Patenaude, Data librarian at Université de Montréal for teaching me R & OpenRefine 
+# Céline Van den Rul at https://towardsdatascience.com/create-a-word-cloud-with-r-bde3e7422e8a for word clouds
+# David Tingle at https://davidtingle.com/misc/bib for ideas of analysis to perform
+# Zotero development team
+# R and R Studio development team
+# OpenRefine development team
+# Wikidata development team and community of contributors
+
+
+
+
+
+
+#####################
 
 
 
@@ -60,22 +101,28 @@
 
 # Let's stat. 
 
+
 # Create a new working folder on your computer
-# Exemple : MyZoteroAnalysis¸
-# Go to Zotero > My library > Right click > Export > Format : CSV (Unicode UTF-8) : Export the file "My library.csv" into your new working folder
-
-# Copy this ZoteroRnalysis.R file into this working folder
-# Open R Studio > File > Open File... > ZoteroRnalysis.R
-# Go to this line with R Studio (it should be green)
+# Example : MyZoteroAnalysis
 
 
+
+# Go to Zotero > My library > Right click > Export > Format : CSV (Unicode UTF-8) 
+# Export the file "My library.csv" into your new working folder "MyZoteroAnalysis"
+
+
+
+# Copy this "ZoteroRnalysis.R" file into this working folder
+# Open the "ZoteroRnalysis.R" file (with R Studio > File > Open File... or double-click on it from the folder)
+# Go to this line within R Studio (it should be green, because it's a comment and all comments are ignored by the program so we can write anything there, especially everything that will make the code more understandable)
 
 
 
 # Go to RStudio > Session > Set Working Directory > To source file location
 # Go in the Console frame 
 # Copy the text after ">" in the console (it should start with "setwd...")
-# Paste and replace the following line (because that line is for my computer) : 
+# Paste and replace the line following that block of comments (because that line is for my computer)  
+# Then, put the cursor on that line and click Run on the top-right of this frame
 
 setwd("C:/Users/martinop/OneDrive - Universite de Montreal/perso/en_cours/MyZoteroAnalysis")
 
@@ -83,56 +130,40 @@ setwd("C:/Users/martinop/OneDrive - Universite de Montreal/perso/en_cours/MyZote
 
 
 
-# Let's install some packages
-# Remove the # before the two lines after this block (the one names install.packages(""))
-# Then, put the cursor on the line (that should have changed the color)
-# Then click gently on the Run button at the top right of this frame
-# Some stuff will happen in the Console under
-# when its finished with a "blue >", repeat with the second line
-# When its finished it means the packages are installed forever on your computer
-# You can put back the two # to skip that step next times you run this analysis (because as you can see it takes time)
-
-# install.packages("ggplot2")
-# install.packages("plotly")
-
-# You will encounter other lines like this along the way
-# Apply the same treatment
-# Some people put all the installation of packages at the begining of the code 
-# but, as I cherish localized citations, I wanted to link the pieces of code 
-# with their relevant localized packages 
 
 
 
+# Now let's install some packages
 
+# Put the cursor under that block and click Run on the top-right of this frame
+# If a package is not installed yet, it will be installed (some stuff will happen in the console under)
+# If a package is installed, nothing will happen (just some blues lines in the console)
 
-# Let's call these packages
-# Put the cursor on the line under (named Library(ggplot2)), then click Run
-# And Click Run again 
-
+# Load ggplot2 library if not already loaded
+if (!requireNamespace("ggplot2", quietly = TRUE)) {
+  install.packages("ggplot2")
+}
 library(ggplot2)
+
+# Repeat
+
+# Load plotly library if not already loaded
+if (!requireNamespace("plotly", quietly = TRUE)) {
+  install.packages("plotly")
+}
 library(plotly)
 
-# The two lines were executed, and in doing so, the two packages (already installed) were invoked 
 
 
 
 
+# Now you will Run all the line that are not starting with >
+# As you can see, Run bring you every time after the lines that were executed so you can just keep clicking on run
+# And watch what going on in the console, and the viewer panel sometimes
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-# Create a specific folder named "output" to place the outputs of the analysis
+# Create a specific folder named "output" to place all the outputs of the analysis (PDF, csv and everything else)
 output_folder <- "output"
 
 # Check if the folder already exists
@@ -149,15 +180,35 @@ if (!dir.exists(output_folder)) {
 
 
 
-# Lets load the Zotero file into R
+# Let's load the Zotero references file into R
 
-# If needed replace "My library.csv" with the actual file path or URL of your CSV file
+# If needed replace "My library.csv" with the actual file name (or URL) of your CSV file
 file_name <- "My library.csv"
+
+
+
+
 
 # Read the CSV file into a variable (here a data_frame) with specific options
 ZOTEROLIB <- read.table(file_name, header = TRUE, sep = ",", encoding = "UTF-8")
 
+# Function to print variable name and class
+print_variable_info <- function(x) {
+  var_name <- deparse(substitute(x))
+  var_class <- class(x)
+  print(paste(var_name, " was created. It's a", var_class, "(class)"))
+}
+print_variable_info(ZOTEROLIB)
+
 # Now all the references are loaded into this big data frame named ZOTEROLIB
+
+
+
+
+
+
+
+
 # Sometimes we will run the analysis on subsets of this big collection
 
 # For example, if we want to analyze only the journal articles that are peer-reviewed 
@@ -183,7 +234,17 @@ subset2_ZOTEROLIB <- subset(ZOTEROLIB,
                             Item.Type == "bookSection" ) & 
                             grepl("_TTRPG", Manual.Tags))
 
-
+# Other Item.Type ??
+# Here is a short list from https://www.zotero.org/support/kb/item_types_and_fields
+#   book
+#   bookSection 
+#   conferencePaper 
+#   journalArticle 
+#   magazineArticle 
+#   newspaperArticle 
+#   thesis
+#   webpage
+# Important : they are case sensitive, they use no space, and their 1st letter is lowercase 
 
 
 
@@ -194,6 +255,12 @@ subset2_ZOTEROLIB <- subset(ZOTEROLIB,
 
 
 # Let's start with some basic analysis
+
+
+
+
+
+
 
 ## ANALYSIS : Peer-reviewed articles distributed by year
 
@@ -288,7 +355,12 @@ write.csv(all_titles_df, file = file_path, row.names = FALSE)
 DF <- subset2_ZOTEROLIB
 presses_count <- table(DF$Publisher)
 
-# Merging some data that are inconsistents
+# Load dplyr library if not already loaded
+if (!requireNamespace("dplyr", quietly = TRUE)) {
+  install.packages("dplyr")
+}
+
+# Merging some data that are inconsistent
 library(dplyr)
 
 DF <- DF %>%
@@ -744,7 +816,10 @@ write.csv(DDFF, file = file_path, row.names = FALSE)
 
 # ANALYSIS : Number of authors per work
 
-# Load the dplyr package
+# Load dplyr library if not already loaded
+if (!requireNamespace("dplyr", quietly = TRUE)) {
+  install.packages("dplyr")
+}
 library(dplyr)
 
 # Function to count authors
@@ -973,16 +1048,32 @@ write.csv(CountryOfOrigin_count, file = file_path, row.names = FALSE)
 ## Creating a word cloud
 # based on the code by Céline Van den Rul at https://towardsdatascience.com/create-a-word-cloud-with-r-bde3e7422e8a 
 
-# install.packages("wordcloud")
-# install.packages("wordcloud2")
-# install.packages("RColorBrewer") 
+# Load wordcloud library if not already loaded
+if (!requireNamespace("wordcloud", quietly = TRUE)) {
+  install.packages("wordcloud")
+}
 library(wordcloud)
+
+# Load RColorBrewer library if not already loaded
+if (!requireNamespace("RColorBrewer", quietly = TRUE)) {
+  install.packages("RColorBrewer")
+}
 library(RColorBrewer)
+
+# Load wordcloud2 library if not already loaded
+if (!requireNamespace("wordcloud2", quietly = TRUE)) {
+  install.packages("wordcloud2")
+} 
 library(wordcloud2)
 
-
-# install.packages("tm")
+# Load tm library if not already loaded
+if (!requireNamespace("tm", quietly = TRUE)) {
+  install.packages("tm")
+} 
 library(tm) 
+
+
+
 #Create a vector containing only the text
 text <- subset1_ZOTEROLIB$Title
 # Create a corpus  
@@ -1025,9 +1116,22 @@ wordcloud2(data=df, size=1.6, color='random-dark')
 
 
 
-library(tidyr)
-library(dplyr)
+
 ## Analysis : Thesis
+
+
+# Load tidyr library if not already loaded
+if (!requireNamespace("tidyr", quietly = TRUE)) {
+  install.packages("tidyr")
+} 
+library(tidyr)
+
+# Load dplyr library if not already loaded
+if (!requireNamespace("dplyr", quietly = TRUE)) {
+  install.packages("dplyr")
+} 
+library(dplyr)
+
 
 subset2_ZOTEROLIB <- subset(ZOTEROLIB, 
                             (Item.Type == "thesis" & 
@@ -1084,12 +1188,13 @@ write.csv(DF_counts_wide, file = file_path, row.names = FALSE)
 
 
 
-# Load ggplot2 library if not already loaded
-if (!requireNamespace("ggplot2", quietly = TRUE)) {
-  install.packages("ggplot2")
+# Load tidyverse library if not already loaded
+if (!requireNamespace("tidyverse", quietly = TRUE)) {
+  install.packages("tidyverse")
 }
-
 library(tidyverse)
+
+
 
 # Filter rows where TypeNormalized is "PhD" and Num.Pages is not NA
 filtered_df_phd <- DF %>% filter(TypeNormalized == "PhD" & !is.na(Num.Pages))
@@ -1221,24 +1326,10 @@ write.csv(ZOTEROLIB, file = file_path, row.names = FALSE)
 
 
 
-#####################
-
-# Credits
-
-# ChatGPT 3.5 by OpenAI for a lot of help with back and forth feedbacks on my R code
-# Caroline Patenaude, Data librarian at Université de Montréal for teaching me R & OpenRefine 
-# Céline Van den Rul at https://towardsdatascience.com/create-a-word-cloud-with-r-bde3e7422e8a for word clouds
-# David Tingle at https://davidtingle.com/misc/bib for ideas of analysis to perform
-# Zotero development team
-# R and R Studio development team
-# OpenRefine development team
-# Wikidata development team and community of contributors
 
 
-# This project and an example (about TTRPGs) is bloggued and discussed (with sample graphics visualizations) at https://jdr.hypotheses.org/1907
 
-# GPL-3.0 license https://github.com/pmartinolli/ZoteroRnalysis/blob/main/LICENSE 
-# Last version of the code available at https://github.com/pmartinolli/ZoteroRnalysis/
+
 
 
 
