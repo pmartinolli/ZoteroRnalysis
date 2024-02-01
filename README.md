@@ -1,6 +1,8 @@
 # ZoteroRnalysis
 Analyze your Zotero library of references with R, to produce graphics and csv files
 
+A more user-friendly variant of this code is available at [ObservableHQ (in Javascript)](https://observablehq.com/@pascaliensis/zoterojsnalysis).
+
 - Everything you need to know is self-contained in the `ZoteroRnalysis.R` file.
 - The file `My library.csv` is an example of Zotero references to be processed.
 - The files `*_reconciled.csv` are examples of reconciled data with OpenRefine.
