@@ -1,5 +1,5 @@
 # ZoteroRnalysis
-Analyze your Zotero library of references with R, to produce graphics and csv files
+Analyzing your Zotero library of references with R, to produce graphics and csv files
 
 A more user-friendly variant of this code is available at [ObservableHQ (in Javascript)](https://observablehq.com/@pascaliensis/zoterojsnalysis).
 
