@@ -1,8 +1,8 @@
 #---
-#ZoteroRnalysis, version 1.9
+#ZoteroRnalysis, version 1.10
 #---
 
-## TODOLIST : commenting the code and changing the name of the variables for better readability 
+## TODOLIST : commenting the code and changing the name of the variables for better readability
 
 
 
@@ -12,7 +12,7 @@
 # Author : Pascal Martinolli
 # Date (version 1.0) : 2023-12-01
 # Last version of the code available at https://github.com/pmartinolli/ZoteroRnalysis/
-# GPL-3.0 license https://github.com/pmartinolli/ZoteroRnalysis/blob/main/LICENSE 
+# GPL-3.0 license https://github.com/pmartinolli/ZoteroRnalysis/blob/main/LICENSE
 # This project and an example about TTRPGs is bloggued and discussed at https://jdr.hypotheses.org/1907 (in French)
 
 
@@ -21,7 +21,7 @@
 
 
 
-### WHAT IS IT DOING ? 
+### WHAT IS IT DOING ?
 
 # This R code can analyze a Zotero library of references & can produce graphics and tabular statistics
 # Optionally, it can retrieve information from Wikidata to enrich the original information
@@ -32,17 +32,17 @@
 
 ### WHY ?
 
-# 1. To learn R Studio with a fun, useful and easy practice 
+# 1. To learn R Studio with a fun, useful and easy practice
 # 2. To better understand your library of references, for example :
 #     What is the distribution of the year of publication ? Did the publications happened long after the journal were created of is it a new academic outlet ?
 #     What are the main journals of the articles ? It can give an idea where to publish later
 #     What are the main publishers of the books and book sections ?
 #     What are the main languages of the references ?
-#     What are the main authors of the studies ? 
+#     What are the main authors of the studies ?
 #     Are authors single authors or multiples authors ?
 #     What are the main topics of the studies ? (NB: you will need to have indexed your corpus of references with your own thesaurus)
 #     How are the topics are distributed through the years ?
-#     What look like a word cloud of the titles of the studies ? 
+#     What look like a word cloud of the titles of the studies ?
 #     What is the distribution of Master and PhD thesis (by year, country, number of pages)
 
 
@@ -69,7 +69,7 @@
 
 # 4. Any PDF viewer, to open some graphics in pdf
 
-# 5. OpenOffice Calc, to open (and maybe edit) the csv files 
+# 5. OpenOffice Calc, to open (and maybe edit) the csv files
 
 
 
@@ -79,7 +79,7 @@
 ### CREDITS
 
 # ChatGPT 3.5 by OpenAI for a lot of help with back and forth feedback on my R code
-# Caroline Patenaude, Data librarian at Université de Montréal for teaching me R & OpenRefine 
+# Caroline Patenaude, Data librarian at Université de Montréal for teaching me R & OpenRefine
 # Céline Van den Rul at https://towardsdatascience.com/create-a-word-cloud-with-r-bde3e7422e8a for word clouds
 # David Tingle at https://davidtingle.com/misc/bib for ideas of analysis to perform
 # Zotero development team
@@ -99,7 +99,7 @@
 
 
 
-# Let's stat. 
+# Let's stat.
 
 
 # Create a new working folder on your computer
@@ -107,7 +107,7 @@
 
 
 
-# Go to Zotero > My library > Right click > Export > Format : CSV (Unicode UTF-8) 
+# Go to Zotero > My library > Right click > Export > Format : CSV (Unicode UTF-8)
 # Export the file "My library.csv" into your new working folder "MyZoteroAnalysis"
 
 
@@ -119,9 +119,9 @@
 
 
 # Go to RStudio > Session > Set Working Directory > To source file location
-# Go in the Console frame 
+# Go in the Console frame
 # Copy the text after ">" in the console (it should start with "setwd...")
-# Paste and replace the line following that block of comments (because that line is for my computer)  
+# Paste and replace the line following that block of comments (because that line is for my computer)
 # Then, put the cursor on that line and click Run on the top-right of this frame
 
 setwd("C:/Users/martinop/OneDrive - Universite de Montreal/perso/en_cours/MyZoteroAnalysis")
@@ -211,40 +211,40 @@ print_variable_info(ZOTEROLIB)
 
 # Sometimes we will run the analysis on subsets of this big collection
 
-# For example, if we want to analyze only the journal articles that are peer-reviewed 
+# For example, if we want to analyze only the journal articles that are peer-reviewed
 # (ie. that are indexed with a tag named peer-reviewed) and that match an another tag
 # NB: all my personal tags are starting with the "_" character to signal they are from my thesaurus
 
-# Creating a subset of the dataframe to match certain documents only 
-# Item.Type = "journalArticle" 
-# and Tags contains "_peer reviewed" 
+# Creating a subset of the dataframe to match certain documents only
+# Item.Type = "journalArticle"
+# and Tags contains "_peer reviewed"
 # and Tags contains "_TTRPG"
 
 # Create a first subset based on your criteria
-subset1_ZOTEROLIB <- subset(ZOTEROLIB, 
-                            Item.Type == "journalArticle" & 
-                            grepl("_peer reviewed", Manual.Tags) & 
+subset1_ZOTEROLIB <- subset(ZOTEROLIB,
+                            Item.Type == "journalArticle" &
+                            grepl("_peer reviewed", Manual.Tags) &
                             grepl("_TTRPG", Manual.Tags))
 
 
 # Create an another subset based on the criteria (Journal article OR book OR book section, AND TTRPG)
-subset2_ZOTEROLIB <- subset(ZOTEROLIB, 
-                           (Item.Type == "journalArticle" | 
-                            Item.Type == "book" | 
-                            Item.Type == "bookSection" ) & 
+subset2_ZOTEROLIB <- subset(ZOTEROLIB,
+                           (Item.Type == "journalArticle" |
+                            Item.Type == "book" |
+                            Item.Type == "bookSection" ) &
                             grepl("_TTRPG", Manual.Tags))
 
 # Other Item.Type ??
 # Here is a short list from https://www.zotero.org/support/kb/item_types_and_fields
 #   book
-#   bookSection 
-#   conferencePaper 
-#   journalArticle 
-#   magazineArticle 
-#   newspaperArticle 
+#   bookSection
+#   conferencePaper
+#   journalArticle
+#   magazineArticle
+#   newspaperArticle
 #   thesis
 #   webpage
-# Important : they are case sensitive, they use no space, and their 1st letter is lowercase 
+# Important : they are case sensitive, they use no space, and their 1st letter is lowercase
 
 
 
@@ -264,15 +264,37 @@ subset2_ZOTEROLIB <- subset(ZOTEROLIB,
 
 ## ANALYSIS : Peer-reviewed articles distributed by year
 
+
 # Assuming your data frame is named DF with a column Publication.Year
 DF <- subset1_ZOTEROLIB
+
+# Assuming Publication.Year is initially stored as character or factor
+# Convert it to character if it's factor
+if (is.factor(DF$Publication.Year)) {
+  DF$Publication.Year <- as.character(DF$Publication.Year)
+}
+
+# Remove any non-numeric characters and convert to numeric
+DF$Publication.Year <- as.numeric(gsub("[^0-9]", "", DF$Publication.Year))
+
+# Check for missing values and handle them if necessary
+if (any(is.na(DF$Publication.Year))) {
+  # Handle missing values: remove them or impute as needed
+  DF <- na.omit(DF)
+}
 
 # Count the observations for each date
 date_counts <- table(DF$Publication.Year)
 
 # Create a sequence of years from the minimum to the maximum, excluding NA
-all_years <- seq(min(as.numeric(DF$Publication.Year), na.rm = TRUE), 
-                 max(as.numeric(DF$Publication.Year), na.rm = TRUE), 
+all_years <- seq(min(as.numeric(DF$Publication.Year), na.rm = TRUE),
+                 max(as.numeric(DF$Publication.Year), na.rm = TRUE),
+                 by = 1)
+
+
+# Create a sequence of years from the minimum to the maximum, excluding NA
+all_years <- seq(min(as.numeric(DF$Publication.Year), na.rm = TRUE),
+                 max(as.numeric(DF$Publication.Year), na.rm = TRUE),
                  by = 1)
 
 # Create a data frame with all years
@@ -448,7 +470,7 @@ write.csv(language_counts, file = file_path, row.names = FALSE)
 
 
 
-# ANALYSIS : Most mentioned authors in journal articles  
+# ANALYSIS : Most mentioned authors in journal articles
 
 # Assuming your data frame is named DF with a column Authors
 DF <- subset1_ZOTEROLIB
@@ -479,12 +501,12 @@ file_path <- file.path(output_folder, "all_authors_counts.csv")
 write.csv(merged_authors_counts_df, file = file_path, row.names = FALSE)
 
 # Order the data frame by count in descending order and select the top 20 authors
-top_authors <- head(merged_authors_counts_df[order(-merged_authors_counts_df$Count), ], 20)
+top_authors <- head(merged_authors_counts_df[order(-merged_authors_counts_df$Count), ], 30)
 
 # Assuming top_titles_df is your data frame with columns 'Author' and 'Count'
 gg_plot <- ggplot(top_authors, aes(x = reorder(`Author`, Count), y = Count)) +
   geom_col(fill = "skyblue") +
-  labs(title = "Top 20 Authors with the highest frequency of mentions in articles", x = "Author", y = "Count") +
+  labs(title = "Top 30 Authors with the highest frequency of mentions in articles", x = "Author", y = "Count") +
   theme_minimal() +
   coord_flip()
 
@@ -505,7 +527,7 @@ write.csv(top_authors, file = file_path, row.names = FALSE)
 
 
 
- 
+
 # ANALYSIS : All your tags in journal articles
 
 # This analysis is assuming you have indexed all your references with tags starting by "_"
@@ -565,7 +587,7 @@ write.csv(top_tags, file = file_path, row.names = FALSE)
 
 # TL;DR, your thesaurus should be organized like this :
 #
-# _PSYCHOLOGY 
+# _PSYCHOLOGY
 #    _therapy
 #    _mental disorder
 #    _cognition
@@ -695,21 +717,21 @@ DDFF <- data.frame()
 for (year in unique(DF$Publication.Year)) {
   # Extract tags for the current year
   year_tags <- unlist(strsplit(gsub(" ", "", DF$Manual.Tags[DF$Publication.Year == year]), ";"))
-  
+
   # Initialize a data frame for the current year
   year_df <- data.frame(
     Publication.Year = rep(year, length(filtered_cap_tags$Tag)),
     Tags = filtered_cap_tags$Tag,
     Count = 0
   )
-  
+
   # Iterate over tags and update Count using regex
   for (i in seq_along(year_df$Tags)) {
     tag <- year_df$Tags[i]
     regex_pattern <- paste0("\\b", tag, "\\b")  # Use word boundaries to match whole tags
     year_df$Count[i] <- sum(grepl(regex_pattern, DF$Manual.Tags[DF$Publication.Year == year]))
   }
-  
+
   # Bind the dataframe to DDFF
   DDFF <- rbind(DDFF, year_df)
 }
@@ -720,8 +742,8 @@ rownames(DDFF) <- NULL
 # Plot the bar chart
 gg_plot <- ggplot(DDFF, aes(x = Publication.Year, y = Count, fill = Tags)) +
   geom_bar(stat = "identity", position = "stack") +
-  labs(title = "Distribution of tags throught the years", 
-       x = "Publication Year", 
+  labs(title = "Distribution of tags throught the years",
+       x = "Publication Year",
        y = "Count") +
   theme_minimal()
 
@@ -760,21 +782,21 @@ small_set_tags <- tags_counts_df %>%
 for (year in unique(DF$Publication.Year)) {
   # Extract tags for the current year
   year_tags <- unlist(strsplit(gsub(" ", "", DF$Manual.Tags[DF$Publication.Year == year]), ";"))
-  
+
   # Initialize a data frame for the current year
   year_df <- data.frame(
     Publication.Year = rep(year, length(small_set_tags$Tag)),
     Tags = small_set_tags$Tag,
     Count = 0
   )
-  
+
   # Iterate over tags and update Count using regex
   for (i in seq_along(year_df$Tags)) {
     tag <- year_df$Tags[i]
     regex_pattern <- paste0("\\b", tag, "\\b")  # Use word boundaries to match whole tags
     year_df$Count[i] <- sum(grepl(regex_pattern, DF$Manual.Tags[DF$Publication.Year == year]))
   }
-  
+
   # Bind the dataframe to DDFF
   DDFF <- rbind(DDFF, year_df)
 }
@@ -785,8 +807,8 @@ rownames(DDFF) <- NULL
 # Plot the bar chart
 gg_plot <- ggplot(DDFF, aes(x = Publication.Year, y = Count, fill = Tags)) +
   geom_bar(stat = "identity", position = "stack") +
-  labs(title = "Distribution of 3 selected tags throught the years", 
-       x = "Publication Year", 
+  labs(title = "Distribution of 3 selected tags throught the years",
+       x = "Publication Year",
        y = "Count") +
   theme_minimal()
 
@@ -876,8 +898,8 @@ write.csv(bubble_data, file = file_path, row.names = FALSE)
 
 ## RECONCILIATION with WIKIDATA
 
-# We are going to use OpenRefine and Wikidata to match the names of the journals with their 
-# respectives QID and then retrieve the date of inception (creation date) of the journals 
+# We are going to use OpenRefine and Wikidata to match the names of the journals with their
+# respectives QID and then retrieve the date of inception (creation date) of the journals
 # if that data is indexed in Wikidata
 
 # 1. Install and open the software OpenRefine.
@@ -885,8 +907,8 @@ write.csv(bubble_data, file = file_path, row.names = FALSE)
 # 3. Reconcile Publication.Title (details not described, a tutorial here https://www.wikidata.org/wiki/User:Pmartinolli/Tutoriel_chercheur)
 # 4. Add a new column based on this reconciled data : Qid
 # 5. Add a new column based on this reconciled data : Inception
-# 6. Add a new column based on this reconciled data : CountryOfOrigin 
-# 7. Add a new column based on CountryOfOrigin : Qid_CoO 
+# 6. Add a new column based on this reconciled data : CountryOfOrigin
+# 7. Add a new column based on CountryOfOrigin : Qid_CoO
 # 6. Export the results into a file journal_titles_reconciled.csv and put that file in the working folder (at the same root level as "My library.csv")
 
 
@@ -922,10 +944,10 @@ ZOTEROLIB$Publication.Inception <- NA
 for (i in 1:nrow(ZOTEROLIB)) {
   # Get the Publication.Title for the current row in ZOTEROLIB
   current_title <- ZOTEROLIB$Publication.Title[i]
-  
+
   # Check if there is a match in data$Publication.Title
   match_row <- match(current_title, journal_titles_reconciled$Publication.Title)
-  
+
   # If there is a match, assign the corresponding Inception value
   if (!is.na(match_row)) {
     ZOTEROLIB$Publication.Inception[i] <- as.numeric(journal_titles_reconciled$Year[match_row])
@@ -936,23 +958,23 @@ for (i in 1:nrow(ZOTEROLIB)) {
 ZOTEROLIB$PubAfterInception <- NA
 
 # Check if 'Publication.Inception' is not NA and calculate 'PubAfterInception'
-ZOTEROLIB$PubAfterInception[!is.na(ZOTEROLIB$Publication.Inception)] <- 
-  ZOTEROLIB$Publication.Year[!is.na(ZOTEROLIB$Publication.Inception)] - 
+ZOTEROLIB$PubAfterInception[!is.na(ZOTEROLIB$Publication.Inception)] <-
+  ZOTEROLIB$Publication.Year[!is.na(ZOTEROLIB$Publication.Inception)] -
   ZOTEROLIB$Publication.Inception[!is.na(ZOTEROLIB$Publication.Inception)]
 
 
 
 # Rebuilt a new subset1 (because we changed the ZOTEROLIB data frame)
 
-# Creating a subset of the dataframe to match certain documents only 
-# Item.Type = "journalArticle" 
-# and Tags contains "_peer reviewed" 
+# Creating a subset of the dataframe to match certain documents only
+# Item.Type = "journalArticle"
+# and Tags contains "_peer reviewed"
 # and Tags contains "_TTRPG"
 
 # Create a first subset based on your criteria
-subset1_ZOTEROLIB <- subset(ZOTEROLIB, 
-                            Item.Type == "journalArticle" & 
-                              grepl("_peer reviewed", Manual.Tags) & 
+subset1_ZOTEROLIB <- subset(ZOTEROLIB,
+                            Item.Type == "journalArticle" &
+                              grepl("_peer reviewed", Manual.Tags) &
                               grepl("_TTRPG", Manual.Tags))
 
 # Remove rows with NA values in PubAfterInception using complete.cases
@@ -979,10 +1001,10 @@ ZOTEROLIB$Qid_CoO <- NA
 for (i in 1:nrow(ZOTEROLIB)) {
   # Get the Publication.Title for the current row in ZOTEROLIB
   current_title <- ZOTEROLIB$Publication.Title[i]
-  
+
   # Check if there is a match in data$Publication.Title
   match_row <- match(current_title, journal_titles_reconciled$Publication.Title)
-  
+
   # If there is a match, assign the corresponding values
   if (!is.na(match_row)) {
     ZOTEROLIB$CountryOfOrigin[i] <- journal_titles_reconciled$CountryOfOrigin[match_row]
@@ -993,15 +1015,15 @@ for (i in 1:nrow(ZOTEROLIB)) {
 
 # Rebuilt a new subset1 (because we changed the ZOTEROLIB data frame, again)
 
-# Creating a subset of the dataframe to match certain documents only 
-# Item.Type = "journalArticle" 
-# and Tags contains "_peer reviewed" 
+# Creating a subset of the dataframe to match certain documents only
+# Item.Type = "journalArticle"
+# and Tags contains "_peer reviewed"
 # and Tags contains "_TTRPG"
 
 # Create a first subset based on your criteria
-subset1_ZOTEROLIB <- subset(ZOTEROLIB, 
-                            Item.Type == "journalArticle" & 
-                              grepl("_peer reviewed", Manual.Tags) & 
+subset1_ZOTEROLIB <- subset(ZOTEROLIB,
+                            Item.Type == "journalArticle" &
+                              grepl("_peer reviewed", Manual.Tags) &
                               grepl("_TTRPG", Manual.Tags))
 
 # Remove rows with NA values in CountryOfOrigin using complete.cases
@@ -1046,7 +1068,7 @@ write.csv(CountryOfOrigin_count, file = file_path, row.names = FALSE)
 
 
 ## Creating a word cloud
-# based on the code by Céline Van den Rul at https://towardsdatascience.com/create-a-word-cloud-with-r-bde3e7422e8a 
+# based on the code by Céline Van den Rul at https://towardsdatascience.com/create-a-word-cloud-with-r-bde3e7422e8a
 
 # Load wordcloud library if not already loaded
 if (!requireNamespace("wordcloud", quietly = TRUE)) {
@@ -1063,20 +1085,20 @@ library(RColorBrewer)
 # Load wordcloud2 library if not already loaded
 if (!requireNamespace("wordcloud2", quietly = TRUE)) {
   install.packages("wordcloud2")
-} 
+}
 library(wordcloud2)
 
 # Load tm library if not already loaded
 if (!requireNamespace("tm", quietly = TRUE)) {
   install.packages("tm")
-} 
-library(tm) 
+}
+library(tm)
 
 
 
 #Create a vector containing only the text
 text <- subset1_ZOTEROLIB$Title
-# Create a corpus  
+# Create a corpus
 docs <- Corpus(VectorSource(text))
 
 # Clean the texts
@@ -1090,13 +1112,13 @@ docs <- tm_map(docs, removeWords, stopwords("english"))
 docs <- tm_map(docs, removeWords, stopwords("french"))
 
 # Create a document-term-matrix
-dtm <- TermDocumentMatrix(docs) 
-matrix <- as.matrix(dtm) 
-words <- sort(rowSums(matrix),decreasing=TRUE) 
+dtm <- TermDocumentMatrix(docs)
+matrix <- as.matrix(dtm)
+words <- sort(rowSums(matrix),decreasing=TRUE)
 df <- data.frame(word = names(words),freq=words)
 
 # Generate the word cloud, method 1
-set.seed(1234) 
+set.seed(1234)
 wordcloud(words = df$word, freq = df$freq, min.freq = 1,
           max.words=200, random.order=FALSE, rot.per=0.35,
           colors=brewer.pal(8, "Dark2"))
@@ -1123,18 +1145,18 @@ wordcloud2(data=df, size=1.6, color='random-dark')
 # Load tidyr library if not already loaded
 if (!requireNamespace("tidyr", quietly = TRUE)) {
   install.packages("tidyr")
-} 
+}
 library(tidyr)
 
 # Load dplyr library if not already loaded
 if (!requireNamespace("dplyr", quietly = TRUE)) {
   install.packages("dplyr")
-} 
+}
 library(dplyr)
 
 
-subset2_ZOTEROLIB <- subset(ZOTEROLIB, 
-                            (Item.Type == "thesis" & 
+subset2_ZOTEROLIB <- subset(ZOTEROLIB,
+                            (Item.Type == "thesis" &
                               grepl("_TTRPG", Manual.Tags)))
 
 DF <- subset2_ZOTEROLIB
@@ -1253,7 +1275,7 @@ write.csv(df_to_export, file = file_name, row.names = FALSE)
 # Add a new column based on the reconciled data : Country
 # Add a new column based on the reconciled data : Country.QID
 
-# Export the file as comma-separated value "universities-reconciled.csv" 
+# Export the file as comma-separated value "universities-reconciled.csv"
 # "Universities", "UniversitiesWD", "UCountry", "UniversitiesWD.QID", "UCountry.QID"
 # and put it at the root of the working folder
 
@@ -1271,11 +1293,11 @@ write.csv(df_to_export, file = file_name, row.names = FALSE)
 file_path <- "universities-reconciled.csv"
 universities_reconciled <- read.csv(file_path, header = FALSE, col.names = c("Universities", "UniversitiesWD", "UCountry", "UniversitiesWD.QID", "UCountry.QID"))
 
-# merge the data 
+# merge the data
 DF <- merge(DF, universities_reconciled, by.x = 'Publisher', by.y = 'Universities', all = FALSE)
 DF <- distinct(DF, Key, .keep_all = TRUE)
 
-count_data <- DF %>% 
+count_data <- DF %>%
   group_by(UCountry, TypeNormalized) %>%
   summarize(count = n())
 
