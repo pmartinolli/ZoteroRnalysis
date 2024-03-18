@@ -1,5 +1,5 @@
 #---
-#ZoteroRnalysis, version 1.10
+#ZoteroRnalysis, version 1.12
 #---
 
 ## TODOLIST : commenting the code and changing the name of the variables for better readability
@@ -522,6 +522,113 @@ write.csv(top_authors, file = file_path, row.names = FALSE)
 
 
 
+## Export the authors_count_df as csv to reconcile with Wikidata and sort the « assumed » gender of the authors based on their first names
+file_path <- file.path(output_folder, "all_authors_counts.csv")
+write.csv(authors_counts_df, file = file_path, row.names = FALSE)
+
+# Open this csv (all_authors_counts.csv )in OpenRefine
+# Column Author > Add a column based on this column
+#               > New column name = firstname
+#               > replace value by
+#                 value.split(',')[1].trim().replace(/^[A-Za-z]\.? /, '').split(' ')[0]
+# Column Author > Add a column based on this column
+#               > New column name = givenname_reco
+#               > replace value by
+#                 value.split(',')[1].trim().replace(/^[A-Za-z]\.? /, '').split(' ')[0]
+# Column givenname_reco > Reconcile > Start reconciling > Wikidata : Type = female given name + Start reconciling
+# Click on the facet at the right : None (become orange)
+# Column givenname_reco > Reconcile > Start reconciling > Wikidata : Type = male given name + Start reconciling
+# Column givenname_reco > Reconcile > Start reconciling > Wikidata : Type (in the box) = unisex given name + Start reconciling
+# Column givenname_reco > Add a column based on reconciled value > P31 (instance of)
+# Rename the column "instance of" into "instance.of"
+# Export all as comma separated value : givenname_gender_reconciled.csv
+# Pass through the csv data in LibreOffice Calc to correct some remaining mistakes
+
+gender_data <- read.csv("givenname_gender_reconciled.csv", stringsAsFactors = FALSE)
+
+# Initialize an empty list to store rows for the new DataFrame
+author_year_gender_rows <- list()
+
+# Iterate through each row of the original DataFrame
+for (i in 1:nrow(DF)) {
+  # Split the authors and corresponding years
+  authors <- trimws(strsplit(DF$Author[i], ";")[[1]])
+  year <- DF$Publication.Year[i]
+
+  # Create a row for each author with corresponding year and gender
+  for (author in authors) {
+    # Find matches in gender_data based on whether the Author column contains the author value
+    matching_row <- gender_data[grepl(author, gender_data$Author, ignore.case = TRUE), ]
+    if (nrow(matching_row) > 0) {
+      gender <- matching_row$`instance.of`
+      # Take the first value if gender has multiple values
+      gender <- gender[1]
+    } else {
+      # If no gender information found for author, set it as "Unknown"
+      gender <- "Unknown"
+    }
+    author_year_gender_rows[[length(author_year_gender_rows) + 1]] <- c(Author = author,
+                                                                        Publication.Year = year,
+                                                                        Gender = gender)
+  }
+}
+
+# Combine all rows into a DataFrame
+DFgender <- do.call(rbind, author_year_gender_rows)
+# Convert DF2 to data frame explicitly
+DFgender <- as.data.frame(DFgender)
+
+# Convert "Gender" column to a factor with specified levels
+DFgender$Gender <- factor(DFgender$Gender, levels = c("male given name", "female given name", "unisex given name", NA))
+
+# Plot the distribution of author_year_gender_rows through the years
+gg_plot <- ggplot(DFgender, aes(x = Publication.Year, fill = Gender)) +
+  geom_bar(position = "stack") +
+  labs(title = "Distribution of Authors by Gender over Years",
+       x = "Year", y = "Count") +
+  scale_fill_manual(values = c("lightblue", "pink", "green", "gray"),
+                    labels = c("Male", "Female", "Unisex", "NA")) +
+  theme_minimal()
+
+# Save the ggplot to a PDF file
+file_path <- file.path(output_folder, "gender_distribution_byyear.pdf")
+ggsave(file_path, plot = gg_plot, width = 8, height = 6)
+
+# Use write.csv to export the merged authors counts to a CSV file
+file_path <- file.path(output_folder, "gender_distribution_byyear.csv")
+write.csv(DFgender, file = file_path, row.names = FALSE)
+
+
+
+
+
+
+
+# Open all_authors_counts.csv in OpenRefine
+# Column Author > Add a column based on this column
+#               > New column name = ORCID_reco
+#               > replace value by
+#                 value => value.split(',')[1].trim() + ' ' + value.split(',')[0].trim()
+# Column ORCID_reco > Reconcile : Add service
+# Column ORCID_reco > Reconcile > Start reconciling > Person
+# Column ORCID_reco > Reconcile > Action > Match each cell to its best candidate
+# Column ORCID_reco > Reconcile > Add entity identifier column
+# Name = ORCID_ID
+# To verify in LibreOffice Calc here is the formulate to do the same in a new column and compare with ORCID_reco : =REGEX(A2; "(.*), (.*)"; "$2 $1")
+
+
+
+
+# Open all_authors_counts.csv in OpenRefine
+# Column Author > Add a column based on this column
+#               > New column name = Wikidata_reco
+# Column Wikidata_reco > Reconcile > Start reconciling > Human (Q5)
+# Column ORCID_reco > Reconcile > Action > Match each cell to its best candidate
+# Column ORCID_reco > Reconcile > Add entity identifier column
+# Name = ORCID_ID
+# To verify in LibreOffice Calc here is the formulate to do the same in a new column and compare with ORCID_reco : =REGEX(A2; "(.*), (.*)"; "$2 $1")
+
+
 
 
 
@@ -774,9 +881,12 @@ DF <- subset1_ZOTEROLIB
 # Create an empty dataframe DDFF
 DDFF <- data.frame()
 
-# Create a small set of 3 tags
+# Create a small set of 4 tags
 small_set_tags <- tags_counts_df %>%
-  filter(Tag %in% c("_therapy", "_mental disorder", "_well-being"))
+  filter(Tag %in% c("_therapy", "_mental disorder", "_well-being", "_anxiety"))
+
+#small_set_tags <- tags_counts_df %>%
+#  filter(Tag %in% c("_moral panic"))
 
 # Iterate over unique Publication.Year values
 for (year in unique(DF$Publication.Year)) {
@@ -807,7 +917,7 @@ rownames(DDFF) <- NULL
 # Plot the bar chart
 gg_plot <- ggplot(DDFF, aes(x = Publication.Year, y = Count, fill = Tags)) +
   geom_bar(stat = "identity", position = "stack") +
-  labs(title = "Distribution of 3 selected tags throught the years",
+  labs(title = "Distribution of 4 selected tags throught the years",
        x = "Publication Year",
        y = "Count") +
   theme_minimal()
@@ -819,7 +929,7 @@ file_path <- file.path(output_folder, "small_set_tags_distributed_by_year.pdf")
 ggsave(file_path, plot = gg_plot, width = 8, height = 6)
 
 # Use write.csv to export the top tags to a CSV file
-file_path <- file.path(output_folder, "samll_set_tags_distributed_by_year.csv")
+file_path <- file.path(output_folder, "small_set_tags_distributed_by_year.csv")
 write.csv(DDFF, file = file_path, row.names = FALSE)
 
 
@@ -1287,7 +1397,7 @@ write.csv(df_to_export, file = file_name, row.names = FALSE)
 
 
 
-# load the data
+# Load the data
 
 # Read the CSV file into a variable (e.g., data_frame) with specific options
 file_path <- "universities-reconciled.csv"
