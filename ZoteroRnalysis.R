@@ -1,5 +1,5 @@
 #---
-#ZoteroRnalysis, version 1.12
+#ZoteroRnalysis, version 1.13
 #---
 
 ## TODOLIST : commenting the code and changing the name of the variables for better readability
@@ -277,25 +277,23 @@ if (is.factor(DF$Publication.Year)) {
 # Remove any non-numeric characters and convert to numeric
 DF$Publication.Year <- as.numeric(gsub("[^0-9]", "", DF$Publication.Year))
 
-# Check for missing values and handle them if necessary
-if (any(is.na(DF$Publication.Year))) {
-  # Handle missing values: remove them or impute as needed
-  DF <- na.omit(DF)
-}
-
 # Count the observations for each date
 date_counts <- table(DF$Publication.Year)
 
 # Create a sequence of years from the minimum to the maximum, excluding NA
-all_years <- seq(min(as.numeric(DF$Publication.Year), na.rm = TRUE),
-                 max(as.numeric(DF$Publication.Year), na.rm = TRUE),
-                 by = 1)
+if(sum(!is.na(DF$Publication.Year)) > 0) {  # Check if we have any non-NA values
+  min_year <- min(DF$Publication.Year, na.rm = TRUE)
+  max_year <- max(DF$Publication.Year, na.rm = TRUE)
 
-
-# Create a sequence of years from the minimum to the maximum, excluding NA
-all_years <- seq(min(as.numeric(DF$Publication.Year), na.rm = TRUE),
-                 max(as.numeric(DF$Publication.Year), na.rm = TRUE),
-                 by = 1)
+  if(is.finite(min_year) && is.finite(max_year)) {  # Check if min and max are valid
+    all_years <- seq(min_year, max_year, by = 1)
+    print(paste("Sequence created from", min_year, "to", max_year))
+  } else {
+    print("Min or max year is not finite")
+  }
+} else {
+  print("No valid years found in the dataset")
+}
 
 # Create a data frame with all years
 all_years_df <- data.frame(Year = all_years)
@@ -323,6 +321,12 @@ ggsave(file_path, plot = gg_plot, width = 8, height = 6)
 # Export the data as a CSV file with column names
 file_path <- file.path(output_folder, "pr_journalarticles_by_year.csv")
 write.csv(merged_data, file = file_path, row.names = FALSE)
+
+
+
+
+
+
 
 
 
@@ -374,18 +378,85 @@ write.csv(all_titles_df, file = file_path, row.names = FALSE)
 
 # ANALYSIS : Listing the top publishers of books and book sections
 
-DF <- subset2_ZOTEROLIB
-presses_count <- table(DF$Publisher)
+# Create an another subset based on the criteria (Journal article OR book OR book section, AND TTRPG)
+subset3_ZOTEROLIB <- subset(ZOTEROLIB,
+                            (  Item.Type == "book" |
+                               Item.Type == "bookSection" ) &
+                              grepl("_TTRPG", Manual.Tags))
 
-# Load dplyr library if not already loaded
-if (!requireNamespace("dplyr", quietly = TRUE)) {
-  install.packages("dplyr")
+DF <- subset3_ZOTEROLIB
+
+# First create separate counts for books and book sections
+DF$Item.Type <- as.factor(DF$Item.Type)  # Convert to factor if not already
+
+# Create counts by year and type
+counts_by_type <- aggregate(rep(1, nrow(DF)),
+                            by = list(Year = DF$Publication.Year,
+                                      Type = DF$Item.Type),
+                            FUN = sum)
+names(counts_by_type)[3] <- "Count"
+
+# Create a sequence of all years
+if(sum(!is.na(DF$Publication.Year)) > 0) {
+  min_year <- 1974  # as per your manual override
+  max_year <- max(DF$Publication.Year, na.rm = TRUE)
+
+  if(is.finite(min_year) && is.finite(max_year)) {
+    all_years <- seq(min_year, max_year, by = 1)
+    print(paste("Sequence created from", min_year, "to", max_year))
+
+    # Create a complete dataset with all years and types
+    types <- unique(DF$Item.Type)
+    complete_grid <- expand.grid(Year = all_years, Type = types)
+
+    # Merge with actual counts
+    merged_data <- merge(complete_grid, counts_by_type,
+                         by = c("Year", "Type"), all.x = TRUE)
+
+    # Replace NAs with 0
+    merged_data$Count[is.na(merged_data$Count)] <- 0
+
+    # Create stacked bar plot
+    gg_plot <- ggplot(merged_data, aes(x = Year, y = Count, fill = Type)) +
+      geom_bar(stat = "identity", position = "stack", width = 0.7) +
+      scale_fill_manual(values = c("book" = "skyblue", "bookSection" = "darkblue")) +
+      labs(title = "Books and Book Sections Distribution by Year",
+           x = "Year",
+           y = "Count",
+           fill = "Type") +
+      theme_minimal() +
+      theme(legend.position = "bottom")
+
+    # Print the plot
+    print(gg_plot)
+
+    # Save the plot
+    file_path <- file.path(output_folder, "books_booksections_by_year_breakdown.pdf")
+    ggsave(file_path, plot = gg_plot, width = 10, height = 6)
+
+    # Save the data
+    file_path <- file.path(output_folder, "books_booksections_by_year_breakdown.csv")
+    write.csv(merged_data, file = file_path, row.names = FALSE)
+
+  } else {
+    print("Min or max year is not finite")
+  }
+} else {
+  print("No valid years found in the dataset")
 }
 
-# Merging some data that are inconsistent
+
+
+
+
+# Listing the top publishers of books and book sections
+
+# Load required libraries
 library(dplyr)
 
+# Merge inconsistent publisher names
 DF <- DF %>%
+  filter(!grepl("Place to Go", Publisher)) %>%  # Remove "Place to Go" entries
   mutate(Publisher = case_when(
     grepl("Wiley", Publisher) ~ "Wiley",
     grepl("McFarland", Publisher) ~ "McFarland",
@@ -395,38 +466,67 @@ DF <- DF %>%
     TRUE ~ Publisher
   ))
 
+# Create count by publisher and type
+publisher_type_counts <- DF %>%
+  filter(!is.na(Publisher) & nzchar(Publisher)) %>%
+  group_by(Publisher, Item.Type) %>%
+  summarise(Count = n(), .groups = 'drop') %>%
+  arrange(desc(Count))
 
-# Create the table of publisher counts
-presses_count <- table(DF$Publisher)
+# Get top 15 publishers by total count
+top_publishers <- publisher_type_counts %>%
+  group_by(Publisher) %>%
+  summarise(Total = sum(Count)) %>%
+  arrange(desc(Total)) %>%
+  head(15) %>%
+  pull(Publisher)
 
-# Sort the counts in descending order and select the top 15
-top_presses <- head(sort(presses_count, decreasing = TRUE), 15)
-all_presses <- sort(presses_count, decreasing = TRUE)
+# Filter data for top publishers
+top_publisher_counts <- publisher_type_counts %>%
+  filter(Publisher %in% top_publishers)
 
-# Create a data frame for the top titles
-top_presses_df <- data.frame(Publisher = names(top_presses), Count = as.numeric(top_presses))
-all_presses_df <- data.frame(Publisher = names(all_presses), Count = as.numeric(all_presses))
-
-# Remove rows with NA or empty Publisher
-top_presses_df <- subset(top_presses_df, !is.na(Publisher) & nzchar(Publisher))
-
-gg_plot <- ggplot(top_presses_df, aes(x = reorder(`Publisher`, Count), y = Count)) +
-  geom_col(fill = "skyblue") +
-  labs(title = "Top 15 Publishers", x = "Journal Titles", y = "Count") +
+# Create the plot
+gg_plot <- ggplot(top_publisher_counts,
+                  aes(x = reorder(Publisher, Count),
+                      y = Count,
+                      fill = Item.Type)) +
+  geom_bar(stat = "identity", position = "stack") +
+  scale_fill_manual(values = c("book" = "skyblue", "bookSection" = "darkblue")) +
+  labs(title = "Top 15 Publishers for Books and Book Sections",
+       x = "Publisher",
+       y = "Count",
+       fill = "Publication Type") +
   theme_minimal() +
-  coord_flip()
+  coord_flip() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "bottom")
 
+# Print the plot
 print(gg_plot)
 
-# Save the ggplot to a PDF file
-file_path <- file.path(output_folder, "top_presses_counts.pdf")
-ggsave(file_path, plot = gg_plot, width = 8, height = 6)
+# Save the plot
+file_path <- file.path(output_folder, "top_presses_counts_by_type.pdf")
+ggsave(file_path, plot = gg_plot, width = 12, height = 8)
 
-# Export the table as a CSV file with column names
-file_path <- file.path(output_folder, "all_presses_counts.csv")
-write.csv(all_presses_df, file = file_path, row.names = FALSE)
+# Create and save detailed CSV
+all_publisher_counts <- publisher_type_counts %>%
+  arrange(desc(Count))
+file_path <- file.path(output_folder, "all_presses_counts_by_type.csv")
+write.csv(all_publisher_counts, file = file_path, row.names = FALSE)
 
+# Optional: Create a summary table with totals
+summary_table <- publisher_type_counts %>%
+  group_by(Publisher) %>%
+  summarise(
+    Books = sum(Count[Item.Type == "book"]),
+    Book_Sections = sum(Count[Item.Type == "bookSection"]),
+    Total = sum(Count)
+  ) %>%
+  arrange(desc(Total))
 
+# Save summary table
+file_path <- file.path(output_folder, "publisher_summary_by_type.csv")
+write.csv(summary_table, file = file_path, row.names = FALSE)
 
 
 
@@ -446,13 +546,34 @@ language_counts <- table(DF$Language)
 # Convert language_counts to a data frame
 language_df <- data.frame(language = names(language_counts), count = as.numeric(language_counts))
 
-# Create the pie chart
-gg_plot <- ggplot(language_df, aes(x = "", y = count, fill = language)) +
-  geom_bar(stat = "identity", width = 1, color = "white") +
-  coord_polar(theta = "y") +
-  theme_void() +
-  scale_fill_brewer(palette = "Set3") +  # You can choose a different color palette
-  labs(title = "Distribution of Language Codes", fill = "Language")
+# Deprecated : Create the pie chart
+# gg_plot <- ggplot(language_df, aes(x = "", y = count, fill = language)) +
+#   geom_bar(stat = "identity", width = 1, color = "white") +
+#   coord_polar(theta = "y") +
+#   theme_void() +
+#   scale_fill_brewer(palette = "Set3") +  # You can choose a different color palette
+#   labs(title = "Distribution of Language Codes in Peer-reviewed Journal Articles", fill = "Language")
+
+# Install and load required packages if not already done
+if (!requireNamespace("treemapify", quietly = TRUE)) {
+  install.packages("treemapify")
+}
+library(treemapify)
+
+# Create the treemap
+gg_plot <- ggplot(language_df,
+                  aes(area = count,
+                      fill = language,
+                      label = paste(language, "\n", count))) +
+  geom_treemap() +
+  geom_treemap_text(colour = "black",
+                    place = "centre",
+                    size = 15) +
+  scale_fill_brewer(palette = "Set3") +
+  theme(legend.position = "none") +  # Remove legend since values are shown in boxes
+  labs(title = "Distribution of Language Codes in Peer-reviewed Journal Articles")
+
+
 
 print(gg_plot)
 
@@ -521,6 +642,11 @@ file_path <- file.path(output_folder, "top_authors_counts.csv")
 write.csv(top_authors, file = file_path, row.names = FALSE)
 
 
+
+
+
+
+# Author names gender
 
 ## Export the authors_count_df as csv to reconcile with Wikidata and sort the « assumed » gender of the authors based on their first names
 file_path <- file.path(output_folder, "all_authors_counts.csv")
@@ -932,6 +1058,68 @@ ggsave(file_path, plot = gg_plot, width = 8, height = 6)
 file_path <- file.path(output_folder, "small_set_tags_distributed_by_year.csv")
 write.csv(DDFF, file = file_path, row.names = FALSE)
 
+
+
+
+
+
+
+
+# ANALYSIS : most cited games
+
+# Assuming your data frame is named DF with a column Tags
+DF <- subset1_ZOTEROLIB
+
+# Create an empty dataframe DDFF
+DDFF <- data.frame()
+
+# Filter for tags ending with "_game"
+small_set_tags <- tags_counts_df %>%
+  filter(grepl("_game$", Tag))  # $ ensures it matches the end of the string
+
+# Iterate over unique Publication.Year values
+for (year in unique(DF$Publication.Year)) {
+  # Extract tags for the current year
+  year_tags <- unlist(strsplit(gsub(" ", "", DF$Manual.Tags[DF$Publication.Year == year]), ";"))
+
+  # Initialize a data frame for the current year
+  year_df <- data.frame(
+    Publication.Year = rep(year, length(small_set_tags$Tag)),
+    Tags = small_set_tags$Tag,
+    Count = 0
+  )
+
+  # Iterate over tags and update Count using regex
+  for (i in seq_along(year_df$Tags)) {
+    tag <- year_df$Tags[i]
+    regex_pattern <- paste0("\\b", tag, "\\b")  # Use word boundaries to match whole tags
+    year_df$Count[i] <- sum(grepl(regex_pattern, DF$Manual.Tags[DF$Publication.Year == year]))
+  }
+
+  # Bind the dataframe to DDFF
+  DDFF <- rbind(DDFF, year_df)
+}
+
+# Reset row names
+rownames(DDFF) <- NULL
+
+# Plot the bar chart
+gg_plot <- ggplot(DDFF, aes(x = Publication.Year, y = Count, fill = Tags)) +
+  geom_bar(stat = "identity", position = "stack") +
+  labs(title = "Distribution of TTRPG games tags throught the years",
+       x = "Publication Year",
+       y = "Count") +
+  theme_minimal()
+
+print(gg_plot)
+
+# Save the ggplot to a PDF file
+file_path <- file.path(output_folder, "games_tags_distributed_by_year.pdf")
+ggsave(file_path, plot = gg_plot, width = 8, height = 6)
+
+# Use write.csv to export the top tags to a CSV file
+file_path <- file.path(output_folder, "games_tags_distributed_by_year.csv")
+write.csv(DDFF, file = file_path, row.names = FALSE)
 
 
 
